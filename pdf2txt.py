@@ -7,55 +7,61 @@ import os
 import subprocess
 
 
-def convert_to_png(
+def pdf_to_txt(
     pdf_path=None,
-    png_path=None,
     year=None,
     city=None,
     state=None,
     report=None,
     pageno=None,
     rotate=None,
-    png_dir=None,
     txt_dir=None,
+    overwrite=False,
 ):
-    print(f"PDF->PNG {pdf_path}[{pageno}] {png_path}")
+    txt_path = f"{txt_dir}/{year}-{city}-{state}-{report}-{pageno}.txt"
+
+    if os.path.exists(txt_path) and not overwrite:
+        print(f"SKIP {txt_path} already exists")
+        return
+
+    print(f"{pdf_path}[{pageno}] -> {txt_path}")
     cmd = [
         "convert",
         "-density",
         "1200",
         "-antialias",
-        f"{pdf_path}[{pageno-1}]",
+        f"pdf:{pdf_path}[{pageno-1}]",
         "-quality",
         "100",
     ]
     if rotate is not None:
         cmd.extend(["-rotate", str(rotate)])
-    cmd.append(png_path)
-    subprocess.check_call(cmd)
+    cmd.append("png:-")
+    png_proc = subprocess.Popen(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+    )
 
-    return (png_path, f"{txt_dir}/{year}-{city}-{state}-{report}.txt")
-
-
-def convert_to_txt(png_paths, txt_path):
     with open(txt_path, "wb") as f:
-        for png_path in png_paths:
-            print(f"PNG->TXT {png_path} {txt_path}")
-            cmd = [
-                "tesseract",
-                png_path,
-                "-",
-                "--dpi",
-                "1200",
-                "--psm",
-                "6",
-            ]
-            subprocess.check_call(
-                cmd,
-                stdin=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdout=f,
-            )
+        cmd = [
+            "tesseract",
+            "-",
+            "-",
+            "--dpi",
+            "1200",
+            "--psm",
+            "6",
+        ]
+        txt_proc = subprocess.check_call(
+            cmd,
+            stdin=png_proc.stdout,
+            stderr=subprocess.DEVNULL,
+            stdout=f,
+        )
+
+    assert png_proc.wait() == 0
 
 
 def main():
@@ -63,13 +69,6 @@ def main():
         description="Convert batches of PDF-formatted CAFRs into text"
     )
     parser.add_argument("config_path", type=str, help="Path to the config file to use")
-    parser.add_argument(
-        "-p",
-        "--png-out-dir",
-        default="png",
-        type=str,
-        help="Directory to dump PNGs of extracted pages into",
-    )
     parser.add_argument(
         "-t",
         "--txt-out-dir",
@@ -112,9 +111,6 @@ def main():
                 reports[k] = sorted(reports[k], key=lambda x: x[0])
 
             for report, pages in reports.items():
-                print(
-                    f"Found {report} on page(s) {','.join([str(p[0]) for p in pages])} for {cafr['city']}, {cafr['state']} in {cafr['year']}"
-                )
                 for p in pages:
                     pdfconv_args.append(
                         {
@@ -128,47 +124,16 @@ def main():
                         }
                     )
 
-    # Stage 1: Convert report pages from PDFs into PNGs
+    # Convert report pages from PDFs into PNGs
     with futures.ThreadPoolExecutor(max_workers=args.num_workers) as executor:
         jobs = []
         for kwargs in pdfconv_args:
-            png_path = f"{args.png_out_dir}/{kwargs['year']}-{kwargs['city']}-{kwargs['state']}-{kwargs['report']}-{kwargs['pageno']}.png"
-            if os.path.exists(png_path) and not args.overwrite:
-                print(f"SKIP {png_path} already exists")
-                continue
             jobs.append(
                 executor.submit(
-                    convert_to_png,
-                    png_path=png_path,
-                    png_dir=args.png_out_dir,
+                    pdf_to_txt,
                     txt_dir=args.txt_out_dir,
+                    overwrite=args.overwrite,
                     **kwargs,
-                )
-            )
-
-        for j in futures.as_completed(jobs):
-            png, txt = j.result()
-            txt_inputs[txt].append(png)
-
-    # Stage 2: Extract tables from the PNGs
-    # TODO(melvin): Might have a lot of unnecessary idle time with this barrier
-    # between pdf->png and png->txt when dealing with many multi-page reports.
-    # If we do some fancy dependency tracking here and dispatch png->txt as soon
-    # as needed pngs are ready, we could avoid that.
-    for k in txt_inputs:
-        txt_inputs[k] = sorted(txt_inputs[k])
-
-    with futures.ThreadPoolExecutor(max_workers=args.num_workers) as executor:
-        jobs = []
-        for txt, pngs in txt_inputs.items():
-            if os.path.exists(txt) and not args.overwrite:
-                print(f"SKIP {txt} already exists")
-                continue
-            jobs.append(
-                executor.submit(
-                    convert_to_txt,
-                    pngs,
-                    txt,
                 )
             )
         for j in futures.as_completed(jobs):

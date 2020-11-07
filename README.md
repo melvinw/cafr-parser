@@ -53,9 +53,9 @@ and it'll be rotated clockwise before trying to throw OCR at it.
 convert -density 1200 -antialias "pdf:<pdf_path>[<page>]" -quality 100 png:- | tesseract - - --dpi 1200 --psm 6
 ```
 
-## 1. Extracting Text from PDFs with `pdfs2txt.py`
+## 1. Extracting Text from PDFs with `pdf2txt.py`
 
-`pdfs2txt.py` accepts a simple config file that describes a batch of pdfs to
+`pdf2txt.py` accepts a simple config file that describes a batch of pdfs to
 extract table text from. The config is just a JSON object with a single key,
 `cafrs`.
 ```
@@ -89,16 +89,11 @@ The value of `pages` is a list containing entries of the form:
 ```
 
 The `report` field indicates which section of the CAFR this page corresponds to
-(e.g. the statement of net position). If multiple pages are associated with the
-same report, they will be sorted in ascending page order and concatenated in
-the output.
+(e.g. the statement of net position). Multiple pages may be with the same
+report.
 
-For each page in the `pages` list, `pdfs2text.py` will save a copy to
-`PNG_OUT_DIR/<year>-<city>-<state>-<report>-<pageno>.png`. This may be useful
-for validating the extracted text by hand.
-
-For each report discovered in the `pages` list, `pdfs2txt.py` will output the
-extracted text to `TXT_OUT_DIR/<year>-<city>-<state>-<report>.txt`
+For each report discovered in the `pages` list, `pdf2txt.py` will output the
+extracted text to `TXT_OUT_DIR/<year>-<city>-<state>-<report>-<pageno>.txt`
 
 The `rotate` field is an optional number of degrees to rotate clockwise before
 applying OCR. Negative values will cause counter-clockwise rotattion.
