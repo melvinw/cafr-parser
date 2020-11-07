@@ -1,0 +1,18 @@
+{
+	"sections": [
+		"ASSETS",
+		"LIABILITIES",
+		"DEFERRED_OUTFLOWS",
+		"DEFERRED_INFLOWS",
+		"NET_POSITION"
+	],
+	"section_patterns": {
+		"(?i)^.{,1} ?assets": "ASSETS",
+		"(?i)^.{,1} ?liabilities": "LIABILITIES",
+		"(?i)^.{,1} ?deferred outflows of resource": "DEFERRED_OUTFLOWS",
+		"(?i)^.{,1} ?deferred inflows of resources": "DEFERRED_INFLOWS",
+		"(?i)^.{,1} ?net position": "NET_POSITION",
+		"(?i)^.{,1} ?net assets": "NET_POSITION"
+	},
+	"value_threshold": [1000.0, 1000000000.0]
+}
