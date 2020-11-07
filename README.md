@@ -5,7 +5,7 @@ by law in most places, publish annual financial reports in a format specified by
 the Governmental Accounting Standards Board (GASB). This report is called a
 Comprehensive Annual Financial Report (CAFR). While some governments legally
 require that CAFRs be published in machine readable formats like XML-based
-eXtensible Business Reporting Language (XBLR), they are in the minority. Many
+eXtensible Business Reporting Language (XBRL), they are in the minority. Many
 governments still make their CAFRs publicly available in PDF format, though.
 
 This repository contains some python scripts that you can use to parse CAFRs in
@@ -40,8 +40,11 @@ You can find releases for each of theese at the links below:
 
 # Usage
 
-These scripts work in two steps, as described below. Note, these scripts are
-primarly only useful when you want to: 
+These scripts work in two steps, as described below.
+
+## 1. Extracting Text from PDFs with `pdf2txt.py`
+
+Note, `pdf2txt.py` is really only useful when you want to:
 * extract multiple tables from one report
 * or extract tables from multiple reports
 
@@ -49,11 +52,10 @@ If you only want to extract text from a single PDF the oneliner below will dump
 the extracted text to stdout. If the page you want to parse is sideways (not
 uncommon for financial reports) you can add `-rotate <degrees>` before `png:-`
 and it'll be rotated clockwise before trying to throw OCR at it.
+
 ```
 convert -density 1200 -antialias "pdf:<pdf_path>[<page>]" -quality 100 png:- | tesseract - - --dpi 1200 --psm 6
 ```
-
-## 1. Extracting Text from PDFs with `pdf2txt.py`
 
 `pdf2txt.py` accepts a simple config file that describes a batch of pdfs to
 extract table text from. The config is just a JSON object with a single key,
