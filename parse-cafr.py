@@ -70,7 +70,7 @@ def parse_alto_xml(f):
             xpos, width = int(word.attrib["HPOS"]), int(word.attrib["WIDTH"])
             for i, b in enumerate(column_bounds):
                 if middle(xpos, width) < b:
-                    cols[i].append(word.attrib["CONTENT"])
+                    cols[i - 1].append(word.attrib["CONTENT"])
                     break
 
         rows.append((label, dict(cols)))
