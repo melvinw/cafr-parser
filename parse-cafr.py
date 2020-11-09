@@ -28,26 +28,11 @@ def parse_alto_xml(f):
         .find("{http://www.loc.gov/standards/alto/ns-v3#}TextBlock")
     )
 
-    header_start = None
-    header_end = None
-    for i, l in enumerate(lines):
-        words = l.findall(ALTO_STRING)
-
-        content = " ".join([w.attrib["CONTENT"] for w in words])
-        m = re.search("[a-zA-Z]+\s+\d{1,2},\s+\d{4}", content)
-        if m is not None:
-            header_start = i + 1
-            continue
-
-        m = re.search("\$", content)
-        if m is not None:
-            header_end = i
-            break
-
-    # Find the columns
+    # Find the columns.
     column_bounds = []
     for i, l in enumerate(lines):
         for w in l.findall(ALTO_STRING):
+            # "%" seems to be a pretty common mispelling of "$"
             m = re.search("\$|\%", w.attrib["CONTENT"])
             if m is None:
                 continue
@@ -60,27 +45,10 @@ def parse_alto_xml(f):
             if not found:
                 column_bounds.append(xpos)
 
-    # Pick some far off point to catch all cells in the last column
+    # Pick some far off point to catch all cells in the last column.
     column_bounds.append(column_bounds[-1] * 2)
 
-    # TODO: add column header detection
-    # header_words = defaultdict(list)
-    # prev_col = column_bounds[0]
-    # for b in column_bounds[1:]:
-    #    for l in lines[header_start:header_end]:
-    #        for word in l.findall(ALTO_STRING):
-    #            xpos, width = int(word.attrib["HPOS"]), int(word.attrib["WIDTH"])
-    #            if xpos < prev_col:
-    #                continue
-    #            if middle(xpos, width) < b:
-    #                header_words[prev_col].append(word.attrib["CONTENT"])
-    #    prev_col = b
-
-    # columns = sorted(
-    #    [(cmid, " ".join(word_stack)) for cmid, word_stack in header_words.items()],
-    #    key=lambda x: x[0],
-    # )
-
+    # Match rows and cells up to columns.
     rows = []
     for l in lines:
         words = l.findall(ALTO_STRING)
@@ -107,6 +75,7 @@ def parse_alto_xml(f):
 
         rows.append((label, dict(cols)))
 
+    # Arrange the rows in an easier to digest format.
     output = []
     for label, row in rows:
         entry = {
@@ -182,7 +151,6 @@ def parse_pdf(
     )
 
     assert png_proc.wait() == 0, png_proc.stderr.read().decode("uft-8")
-    assert alto_proc.wait() == 0, alto_proc.stderr.read().decode("uft-8")
 
     return parse_alto_xml(alto_proc.stdout)
 
