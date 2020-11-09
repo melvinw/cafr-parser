@@ -39,16 +39,29 @@ script.
 ./parse-cafr.py some-city-2019.pdf 53 > balance-sheet.csv
 ```
 
-You can dump the extracted table as JSON by passing adding `--format json` to
-the command line. The output will be a list of rows formatted like:
+Here's the `--help` text as a quick reference.
 ```
-{
-	"label": "<row label>",
-	"column_data": {
-		"<column_idx>": <currency>,
-		...
-	}
-}
+usage: parse-cafr.py [-h] [-v] [-r ROTATE] [-f FORMAT] pdf_path pages
+
+Convert batches of PDF-formatted CAFRs into text
+
+positional arguments:
+  pdf_path              Path to the PDF file to convert
+  pages                 Pages to convert (zero-indexed). Accepts list:
+                        <int>[,<int>...] or range <int>[-<int>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --concat-vertical
+                        By default, pages are concatenated horizontally. If
+                        this flag is set, they will be concatenated vertically
+  -r ROTATE, --rotate ROTATE
+                        Number of degrees to rotate clockwise before
+                        extracting text from pages.Negative value will rotate
+                        counter-clockwise.
+  -f FORMAT, --format FORMAT
+                        Output format. Currently support json and csv.
+                        (Default: csv)
 ```
 
 See the [tutorial](TUTORIAL.md) for more detailed usage info.
