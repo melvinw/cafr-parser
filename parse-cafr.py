@@ -33,7 +33,7 @@ def parse_alto_xml(f):
     for i, l in enumerate(lines):
         for w in l.findall(ALTO_STRING):
             # "%" seems to be a pretty common mispelling of "$"
-            m = re.search("\$|\%", w.attrib["CONTENT"])
+            m = re.search("\$", w.attrib["CONTENT"])
             if m is None:
                 continue
             found = False
@@ -44,6 +44,7 @@ def parse_alto_xml(f):
                     break
             if not found:
                 column_bounds.append(xpos)
+                column_bounds = sorted(column_bounds)
 
     # Pick some far off point to catch all cells in the last column.
     column_bounds.append(column_bounds[-1] * 2)
