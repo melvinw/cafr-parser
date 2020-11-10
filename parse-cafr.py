@@ -2,6 +2,7 @@
 import argparse
 from collections import defaultdict
 import copy
+import itertools
 import json
 import re
 import subprocess
@@ -29,6 +30,7 @@ def parse_alto_xml(f):
     )
 
     # Find the columns.
+    header_end = None
     column_bounds = []
     for i, l in enumerate(lines):
         for w in l.findall(ALTO_STRING):
@@ -38,6 +40,8 @@ def parse_alto_xml(f):
                 continue
             found = False
             xpos = int(w.attrib["HPOS"])
+            if header_end is None:
+                header_end = i
             for b in column_bounds[::-1]:
                 if abs(xpos - b) < 100:
                     found = True
@@ -49,9 +53,31 @@ def parse_alto_xml(f):
     # Pick some far off point to catch all cells in the last column.
     column_bounds.append(column_bounds[-1] * 2)
 
+    # Try to detect column headers.
+    a, b = itertools.tee(range(len(column_bounds)))
+    next(b, None)
+    col_pairs = list(zip(a, b))
+    column_headers = defaultdict(list)
+    for i, l in enumerate(lines[3:header_end]):
+        acc = []
+        range_start = column_bounds[col_pairs[0][0]]
+        range_end = range_start
+        for c in l.findall(ALTO_STRING):
+            xstart, width = int(c.attrib["HPOS"]), int(c.attrib["WIDTH"])
+            xend = xstart + width
+
+            for j, k in col_pairs:
+                x1, x2 = column_bounds[j], column_bounds[k]
+                if xstart > x1 and xend < x2:
+                    column_headers[j].append(c.attrib["CONTENT"])
+                    break
+
+    column_headers = {k: " ".join(v) for k, v in column_headers.items()}
+    column_headers = [column_headers.get(i, "") for i in range(len(column_bounds) - 1)]
+
     # Match rows and cells up to columns.
     rows = []
-    for l in lines:
+    for l in lines[header_end:]:
         words = l.findall(ALTO_STRING)
 
         label_start = None
@@ -99,7 +125,7 @@ def parse_alto_xml(f):
                 entry["column_data"][k] = val
         output.append(entry)
 
-    return len(column_bounds) - 1, output
+    return column_headers, output
 
 
 def parse_pdf(
@@ -189,16 +215,17 @@ def main():
     )
     args = parser.parse_args()
 
-    num_columns, rows = parse_pdf(
+    headers, rows = parse_pdf(
         args.pdf_path, args.pages, args.rotate, args.vertical_concat
     )
 
     if args.format == "json":
         print(json.dumps(rows, indent=4))
     elif args.format == "csv":
+        print(",".join(["label"] + headers))
         for row in rows:
             parts = [row["label"].replace(",", "")]
-            for i in range(num_columns):
+            for i in range(len(headers)):
                 parts.append(str(row["column_data"].get(i, "-")))
             print(",".join(parts))
 

@@ -1,2 +1,2 @@
 #!/bin/sh
-cat args.txt | xargs -P 4 -I % sh -c ../../parse-cafr.py %
+cat args.txt | grep pdf | xargs -P 4 -I % sh -c '../../parse-cafr.py %'
