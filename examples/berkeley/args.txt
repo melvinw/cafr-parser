@@ -1,0 +1,51 @@
+pdf/2008.pdf 49 > csv/2008-net-position.csv
+pdf/2008.pdf 50 --rotate 90 > csv/2008-activities.csv
+pdf/2008.pdf 51 > csv/2008-balance-sheet.csv
+
+pdf/2009.pdf 48 > csv/2009-net-position.csv
+pdf/2009.pdf 49 --rotate 90 > csv/2009-activities.csv
+pdf/2009.pdf 50 > csv/2009-balance-sheet.csv
+
+pdf/2010.pdf 49 > csv/2010-net-position.csv
+pdf/2010.pdf 50 --rotate 90 > csv/2010-activities.csv
+pdf/2010.pdf 52 > csv/2010-balance-sheet.csv
+
+pdf/2011.pdf 51 --rotate 90 > csv/2011-net-position.csv
+pdf/2011.pdf 52 --rotate 90 > csv/2011-activities.csv
+pdf/2011.pdf 53 > csv/2011-balance-sheet.csv
+
+pdf/2012.pdf 51 > csv/2012-net-position.csv
+pdf/2012.pdf 52 > csv/2012-activities.csv
+pdf/2012.pdf 53 > csv/2012-balance-sheet.csv
+
+pdf/2013.pdf 57 > csv/2013-net-position.csv
+pdf/2013.pdf 58 > csv/2013-activities.csv
+pdf/2013.pdf 59 > csv/2013-balance-sheet.csv
+
+pdf/2014.pdf 57 --rotate 90 > csv/2014-net-position.csv
+pdf/2014.pdf 58 --rotate 90 > csv/2014-activities.csv
+pdf/2014.pdf 59 > csv/2014-balance-sheet.csv
+
+pdf/2015.pdf 55 --rotate 90 > csv/2015-net-position.csv
+pdf/2015.pdf 56 --rotate 90 > csv/2015-activities.csv
+pdf/2015.pdf 57 > csv/2015-balance-sheet.csv
+
+pdf/2016.pdf 56 > csv/2016-net-position.csv
+pdf/2016.pdf 57 > csv/2016-activities.csv
+pdf/2016.pdf 58 > csv/2016-balance-sheet.csv
+
+pdf/2017.pdf 54 > csv/2017-net-position.csv
+pdf/2017.pdf 55,56 > csv/2017-activities.csv
+pdf/2017.pdf 59 > csv/2017-balance-sheet.csv
+
+pdf/2017.pdf 54 > csv/2017-net-position.csv
+pdf/2017.pdf 55,56 > csv/2017-activities.csv
+pdf/2017.pdf 59 > csv/2017-balance-sheet.csv
+
+pdf/2018.pdf 53 > csv/2018-net-position.csv
+pdf/2018.pdf 55,56 > csv/2018-activities.csv
+pdf/2018.pdf 59 > csv/2018-balance-sheet.csv
+
+pdf/2019.pdf 55 > csv/2019-net-position.csv
+pdf/2019.pdf 57,58 > csv/2019-activities.csv
+pdf/2019.pdf 61 > csv/2019-balance-sheet.csv
