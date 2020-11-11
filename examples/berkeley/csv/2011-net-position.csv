@@ -1,4 +1,4 @@
-label,Governmental Activities,Government Business-Type Activities,Total,Rent Stabilization,Units ' Berkeley | Housing Authority
+label,Governmental Activities,Business-Type Activities,Total,Rent Stabilization,Berkeley | Housing Authority
 Cash and investments,133055963.0,37023726.0,170079689.0,4179614.0,1944761.0
 Receivables (net of allowance for uncollectibles),85298211.0,3681237.0,88979448.0,-,67072.0
 Inventories,99152.0,-,99152.0,-,-
@@ -26,7 +26,7 @@ Due to primary government,-,-,-,-,218555.0
 Accrued Interest Payable,1742429.0,706775.0,2449204.0,-,-
 Deposit Held,645850.0,390135.0,1035985.0,10100.0,19484.0
 Other Liabilities,3197474.0,214064.0,3411638.0,201164.0,364589.0
-Noncurrent liabilities,-,-,-,-,-
+Noncurrent liabilities,-,-,-,-,-11.0
 Due within one year,11452843.0,3100551.0,14553394.0,19187.0,182436.0
 Due in more than one year,161634334.0,43750163.0,205384497.0,233715.0,1231161.0
 Total liabilities,193877190.0,51027681.0,244904871.0,3400161.0,2275713.0
