@@ -20,12 +20,14 @@ extracting computer generated text from images nowadays.
 * python (tested with 3.7 or newer. 2 might work)
 * ImageMagick (tested with 7.0.10-24)
 * tesseract (tested with 4.1.1)
+* OpenCV (tested with 3.4.1)
 
 You can find releases for each of theese at the links below:
 
 * https://www.python.org/downloads/
 * https://imagemagick.org/script/download.php
 * https://github.com/tesseract-ocr/tesseract/releases
+* https://pypi.org/project/opencv-python/
 
 # Usage
 
