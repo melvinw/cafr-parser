@@ -21,8 +21,10 @@ def middle(a, b):
 
 
 def join_words(words):
-    ret = words[0]
-    for w in words[1:]:
+    words = sorted(words, key=lambda x: x[0])
+    words = sorted(words, key=lambda x: x[1])
+    _, _, ret = words[0]
+    for _, _, w in words[1:]:
         if ret[-1] == "-":
             ret = ret + w
         else:
@@ -30,7 +32,25 @@ def join_words(words):
     return ret
 
 
-def parse_alto_xml(alto_bytes, png_bytes):
+def extract_table_from_png(png_bytes):
+    # Extract text from the PDF
+    alto_proc = subprocess.Popen(
+        [
+            "tesseract",
+            "-",
+            "-",
+            "--dpi",
+            "1200",
+            "--psm",
+            "6",
+            "alto",
+        ],
+        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    alto_bytes, _ = alto_proc.communicate(input=png_bytes)
+
     parser = ET.XMLParser()
     parser.feed(alto_bytes.decode("utf-8"))
     root = parser.close()
@@ -42,14 +62,15 @@ def parse_alto_xml(alto_bytes, png_bytes):
         .find("{http://www.loc.gov/standards/alto/ns-v3#}TextBlock")
     )
 
-    # Find the columns.
+    # Find the columns. By convention, it seems like CAFR reports have at least
+    # one row with dollar signs at the beginning of every column.
     header_end = None
     header_end_ypos = None
     column_bounds = []
     for i, l in enumerate(lines):
         for w in l.findall(ALTO_STRING):
             # "%" seems to be a pretty common mispelling of "$"
-            m = re.search("\$", w.attrib["CONTENT"])
+            m = re.search("\$|\%", w.attrib["CONTENT"])
             if m is None:
                 continue
             found = False
@@ -66,14 +87,13 @@ def parse_alto_xml(alto_bytes, png_bytes):
                 column_bounds.append(xpos)
                 column_bounds = sorted(column_bounds)
 
+    # Aumme the last column is about as wide as the rest.
     col_width = 0.0
     prev_col = column_bounds[0]
     for c in column_bounds[1:]:
         col_width += c - prev_col
         prev_col = c
     col_width /= len(column_bounds)
-
-    # Pick some far off point to catch all cells in the last column.
     column_bounds.append(column_bounds[-1] + col_width)
 
     # Find dividing lines between differnet levels of headers
@@ -90,9 +110,8 @@ def parse_alto_xml(alto_bytes, png_bytes):
             header_dividers.add(y2)
             continue
     header_dividers = sorted(list(header_dividers), reverse=True)
-    print(header_dividers)
 
-    # Try to detect column headers.
+    # Detect column headers.
     a, b = itertools.tee(range(len(column_bounds)))
     next(b, None)
     col_pairs = list(zip(a, b))
@@ -103,10 +122,10 @@ def parse_alto_xml(alto_bytes, png_bytes):
         if below_first and ypos > header_dividers[0]:
             continue
         if below_first:
-            while header_dividers[0] > ypos:
+            while len(header_dividers) > 0 and header_dividers[0] > ypos:
                 header_dividers = header_dividers[1:]
             below_first = False
-        if ypos < header_dividers[0]:
+        if len(header_dividers) > 0 and ypos < header_dividers[0]:
             continue
 
         acc = []
@@ -114,38 +133,43 @@ def parse_alto_xml(alto_bytes, png_bytes):
         range_end = range_start
         for c in l.findall(ALTO_STRING):
             xstart, width = int(c.attrib["HPOS"]), int(c.attrib["WIDTH"])
-            xend = xstart + width
+            mid = middle(xstart, xstart + width)
+            if xstart < column_bounds[0]:
+                continue
 
             col = col_pairs[-1][0]
             for j, k in col_pairs:
                 x1, x2 = column_bounds[j], column_bounds[k]
-                if xstart > x1 and xend < x2:
+                if mid > x1 and mid < x2:
                     col = j
                     break
-            column_headers[col].append(c.attrib["CONTENT"])
+            column_headers[col].append((xstart, ypos, c.attrib["CONTENT"]))
 
-    column_headers = {k: join_words(v[::-1]) for k, v in column_headers.items()}
+    column_headers = {k: join_words(v) for k, v in column_headers.items()}
     column_headers = [column_headers.get(i, "") for i in range(len(column_bounds) - 1)]
 
-    # Match rows and cells up to columns.
+    # Split rows up into the columns we found.
     rows = []
     for l in lines[header_end:]:
         words = l.findall(ALTO_STRING)
 
-        label_start = None
+        # Find labels this way to avoid a bunch of special casing for
+        # statements, like the statement of activities, that has a second table
+        # below the first that only uses a subset of columns.
+        label_end = None
         for i, word in enumerate(words[::-1]):
             m = re.match("[a-zA-Z]", word.attrib["CONTENT"])
             if m is not None:
-                label_start = len(words) - i
+                label_end = len(words) - i
                 break
 
-        if label_start is None:
+        if label_end is None:
             continue
 
-        label = " ".join([w.attrib["CONTENT"] for w in words[:label_start]])
+        label = " ".join([w.attrib["CONTENT"] for w in words[:label_end]])
 
         cols = defaultdict(list)
-        for word in words[label_start:]:
+        for word in words[label_end:]:
             xpos, width = int(word.attrib["HPOS"]), int(word.attrib["WIDTH"])
             col = col_pairs[-1][0]
             for j, k in col_pairs:
@@ -217,25 +241,7 @@ def parse_pdf(
     )
     png_out, _ = png_proc.communicate()
 
-    cmd = [
-        "tesseract",
-        "-",
-        "-",
-        "--dpi",
-        "1200",
-        "--psm",
-        "6",
-        "alto",
-    ]
-    alto_proc = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-    alto_out, _ = alto_proc.communicate(input=png_out)
-
-    return parse_alto_xml(alto_out, png_out)
+    return extract_table_from_png(png_out)
 
 
 def main():
