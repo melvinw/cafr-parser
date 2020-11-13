@@ -40,7 +40,7 @@ def extract_table_from_png(png_bytes):
             "-",
             "-",
             "--dpi",
-            "1200",
+            "300",
             "--psm",
             "6",
             "alto",
@@ -70,7 +70,7 @@ def extract_table_from_png(png_bytes):
     for i, l in enumerate(lines):
         for w in l.findall(ALTO_STRING):
             # "%" seems to be a pretty common mispelling of "$"
-            m = re.search("\$|\%", w.attrib["CONTENT"])
+            m = re.match("^\$|\%|§|¥|S$", w.attrib["CONTENT"])
             if m is None:
                 continue
             found = False
@@ -98,17 +98,25 @@ def extract_table_from_png(png_bytes):
 
     # Find dividing lines between differnet levels of headers
     header_dividers = set({})
-    img = cv.imdecode(np.frombuffer(png_bytes, np.uint8), cv.IMREAD_GRAYSCALE)
-    edges = cv.Canny(img, 50, 150, apertureSize=3)
-    img_lines = cv.HoughLinesP(edges, 1, np.pi / 180, 1000, col_width, 0)
-    for line in img_lines:
-        x1, y1, x2, y2 = line[0]
-        if y1 < header_end_ypos:
-            header_dividers.add(y1)
-            continue
-        if y2 < header_end_ypos:
-            header_dividers.add(y2)
-            continue
+    img = cv.imdecode(np.frombuffer(png_bytes, np.uint8), cv.IMREAD_COLOR)
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    _, thresh_img = cv.threshold(gray, 225, 255, cv.THRESH_BINARY_INV)
+    img_lines = cv.HoughLinesP(
+        thresh_img,
+        rho=1,
+        theta=np.pi/2,
+        threshold=1,
+        minLineLength=100,
+        maxLineGap=3,
+    )
+    if img_lines is not None:
+        for line in img_lines:
+            x1, y1, x2, y2 = line[0]
+            if y1 < header_end_ypos and y2 < header_end_ypos:
+                cv.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                header_dividers.add(y1)
+                continue
+    cv.imwrite("foo.png", img)
     header_dividers = sorted(list(header_dividers), reverse=True)
 
     # Detect column headers.
@@ -125,7 +133,7 @@ def extract_table_from_png(png_bytes):
             while len(header_dividers) > 0 and header_dividers[0] > ypos:
                 header_dividers = header_dividers[1:]
             below_first = False
-        if len(header_dividers) > 0 and ypos < header_dividers[0]:
+        if ypos < header_dividers[0]:
             continue
 
         acc = []
@@ -217,7 +225,7 @@ def parse_pdf(
     cmd = [
         "convert",
         "-density",
-        "1200",
+        "300",
         "-antialias",
         f"pdf:{pdf_path}[{pages}]",
         "-quality",
