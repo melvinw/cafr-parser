@@ -14,8 +14,7 @@ The Statement of Net Position in the 2019 report is formatted in a pretty standa
 ```
 $ ./parse-cafr.py 2019.pdf 55 --format csv
 <snip>
-Assets,-,-,-,-
-Current assets:,-,-,-,-
+label,Governmental Activities,Business-Type Activities,Total,Rent Stabilization Board
 Cash and investments,220581964.0,81956522.0,302538486.0,6410679.0
 Receivables (net of allowance for uncollectible),34086776.0,3771792.0,37858568.0,-
 Prepaid items,485140.0,-,485140.0,-
@@ -27,17 +26,56 @@ Total current assets,244958760.0,95987408.0,340946168.0,6410679.0
 
 Add the `--format json` option to get a JSON-formatted assets. The `column_data` key-value pairs correspond to the fields of the CSV output (zero-indexed offset starting after the label field).
 ```
-$ ./parse-cafr.py 2019.pdf 55 --format json | jq -c ".[]"
+$ ./parse-cafr.py 2019.pdf 55 --format json
 [
 <snip>
-{"label":"Assets","column_data":{}}
-{"label":"Current assets:","column_data":{}}
-{"label":"Cash and investments","column_data":{"0":220581964,"1":81956522,"2":302538486,"3":6410679}}
-{"label":"Receivables (net of allowance for uncollectible)","column_data":{"0":34086776,"1":3771792,"2":37858568}}
-{"label":"Prepaid items","column_data":{"0":485140,"2":485140}}
-{"label":"Inventories","column_data":{"0":63974,"2":63974}}
-{"label":"Internal balances","column_data":{"0":-10259094,"1":10259094}}
-{"label":"Total current assets","column_data":{"0":244958760,"1":95987408,"2":340946168,"3":6410679}}
+    {
+        "label": "Cash and investments",
+        "column_data": {
+            "Governmental Activities": 220581964.0,
+            "Business-Type Activities": 81956522.0,
+            "Total": 302538486.0,
+            "Rent Stabilization Board": 6410679.0
+        }
+    },
+    {
+        "label": "Receivables (net of allowance for uncollectible)",
+        "column_data": {
+            "Governmental Activities": 34086776.0,
+            "Business-Type Activities": 3771792.0,
+            "Total": 37858568.0
+        }
+    },
+    {
+        "label": "Prepaid items",
+        "column_data": {
+            "Governmental Activities": 485140.0,
+            "Total": 485140.0
+        }
+    },
+    {
+        "label": "Inventories",
+        "column_data": {
+            "Governmental Activities": 63974.0,
+            "Total": 63974.0
+        }
+    },
+    {
+        "label": "Internal balances",
+        "column_data": {
+            "Governmental Activities": -10259094.0,
+            "Business-Type Activities": 10259094.0
+        }
+    },
+    {
+        "label": "Total current assets",
+        "column_data": {
+            "Governmental Activities": 244958760.0,
+            "Business-Type Activities": 95987408.0,
+            "Total": 340946168.0,
+            "Rent Stabilization Board": 6410679.0
+        }
+    },
 <snip>
 ]
 ```
