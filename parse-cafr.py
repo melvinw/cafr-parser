@@ -38,7 +38,7 @@ def extract_table_from_png(png_bytes):
             "-",
             "-",
             "--dpi",
-            "1200",
+            "300",
             "--psm",
             "6",
             "alto",
@@ -194,7 +194,7 @@ def parse_pdf(
     cmd = [
         "convert",
         "-density",
-        "1200",
+        "300",
         "-antialias",
         f"pdf:{pdf_path}[{pages}]",
         "-quality",
